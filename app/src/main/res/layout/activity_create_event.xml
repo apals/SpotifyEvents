@@ -7,19 +7,19 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="apals.se.spotifyevents.MainActivity">
+    tools:context="apals.se.spotifyevents.CreateEventActivity">
 
-    <Button
-        android:id="@+id/button_queue"
+    <EditText
+        android:id="@+id/edittext_event_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:onClick="queue"
-        android:text="Queue the super song" />
+        android:hint="Event name"/>
 
-    <ListView
-        android:id="@+id/queue_list"
+    <Button
+        android:id="@+id/button_confirm_event"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/button_queue"></ListView>
+        android:text="Confirm"
+        android:onClick="confirmEvent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/edittext_event_name" />
 </RelativeLayout>

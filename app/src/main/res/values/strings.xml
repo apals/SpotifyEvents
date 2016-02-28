@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SpotifyEvents</string>
+    <string name="title_activity_events_list">EventsListActivity</string>
 </resources>

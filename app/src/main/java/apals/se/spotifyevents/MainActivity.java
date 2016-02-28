@@ -1,10 +1,20 @@
 package apals.se.spotifyevents;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -15,8 +25,14 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.Spotify;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity implements
         PlayerNotificationCallback, ConnectionStateCallback {
+
+
+    String hardstyle = "spotify:track:3DWmbuWA1JF7QHCoN5JKl7";
+    String petter = "spotify:track:7rG7jgVJF0wbd5lI4GnJrI";
 
     private static final String CLIENT_ID = "77a578db53d54669b5927d5479674958";
     private static final String REDIRECT_URI = "yourcustomprotocol://callback";
@@ -26,12 +42,47 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQUEST_CODE = 1337;
 
     private Player mPlayer;
+    private String mEventName;
+    private ListView mListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mEventName = getIntent().getStringExtra("EVENT_NAME");
+
+        setTitle(mEventName);
+        if(getActionBar() != null)
+        getActionBar().setTitle(mEventName);
+        Firebase.setAndroidContext(this);
+        Firebase myFirebaseRef = new Firebase("https://vivid-torch-1185.firebaseio.com/");
+        myFirebaseRef.child(mEventName + "/songs").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (mPlayer == null) return;
+                if (snapshot.getValue() == null) return;
+                System.out.println(snapshot.getValue());  //prints "Do you have data? You'll love Firebase."
+                if (!mPlayer.isShutdown())
+                    mPlayer.play((String) snapshot.getValue());
+
+                if (mListView == null) return;
+                if (mListView.getAdapter() == null) return;
+
+                if (((String) snapshot.getValue()).equals(petter)) {
+                    ((MyAdapter) mListView.getAdapter()).add("Petter - Vi är");
+                } else if (((String) snapshot.getValue()).equals(hardstyle)) {
+                    ((MyAdapter) mListView.getAdapter()).add("Refuzion - Hardstyle DNA (Radio Edit)");
+                }
+            }
+
+            @Override
+            public void onCancelled(FirebaseError error) {
+            }
+        });
         setContentView(R.layout.activity_main);
 
+
+        mListView = (ListView) findViewById(R.id.queue_list);
+        mListView.setAdapter(new MyAdapter(this, R.layout.support_simple_spinner_dropdown_item, new ArrayList<String>()));
         AuthenticationRequest.Builder builder =
                 new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"user-read-private", "streaming"});
@@ -116,5 +167,49 @@ public class MainActivity extends AppCompatActivity implements
         // VERY IMPORTANT! This must always be called or else you will leak resources
         Spotify.destroyPlayer(this);
         super.onDestroy();
+    }
+
+
+    int i = 0;
+
+    public void queue(View view) {
+        Firebase ref = new Firebase("https://vivid-torch-1185.firebaseio.com/");
+        if (i % 2 == 0) {
+            ref.child(mEventName + "/songs").setValue(petter);
+        } else {
+            ref.child(mEventName + "/songs").setValue(hardstyle);
+        }
+        i++;
+    }
+
+
+    class MyAdapter extends ArrayAdapter<String> {
+
+        private Context mContext;
+        private ArrayList<String> objects;
+
+
+        public MyAdapter(Context context, int resource, ArrayList<String> objects) {
+            super(context, resource);
+            this.objects = objects;
+        }
+
+        public void add(String s) {
+            objects.add(s);
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = getLayoutInflater().inflate(R.layout.queue_item, null, false);
+            ((TextView) v.findViewById(R.id.queue_item_name)).setText(objects.get(position));
+            return v;
+        }
+
+        @Override
+        public int getCount() {
+            return objects.size();
+        }
+
     }
 }
